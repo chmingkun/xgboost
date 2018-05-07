@@ -59,6 +59,7 @@ object XGBoost {
     val jBooster = if (booster == null) {
       null
     } else {
+      println("+++Start training on an existing booster")
       booster.booster
     }
     val xgboostInJava = JXGBoost.train(

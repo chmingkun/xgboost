@@ -16,6 +16,7 @@
 
 package ml.dmlc.xgboost4j.scala.spark
 
+import java.io
 import java.io.File
 import java.nio.file.Files
 
@@ -318,6 +319,16 @@ object XGBoost extends Serializable {
       case _ => throw new IllegalArgumentException("parameter \"tracker_conf\" must be an " +
         "instance of TrackerConf.")
     }
+
+    println(s"params:${params}")
+    // get init model path
+    val initModelPath: String = params.get("init_model_path") match {
+      case None => ""
+      case Some(path: String) => path
+      case _ => throw new IllegalArgumentException("parameter \"init_model_path\" must be an " +
+              "string.")
+    }
+
     val timeoutRequestWorkers: Long = params.get("timeout_request_workers") match {
       case None => 0L
       case Some(interval: Long) => interval
@@ -330,8 +341,15 @@ object XGBoost extends Serializable {
     val sc = trainingData.sparkContext
     val checkpointManager = new CheckpointManager(sc, checkpointPath)
     checkpointManager.cleanUpHigherVersions(round)
-
     var prevBooster = checkpointManager.loadCheckpointAsBooster
+    // first get init model path
+    prevBooster = if (initModelPath != "" && prevBooster == null) {
+      println(s"initModelPath:$initModelPath")
+      loadModelFromHadoopFile(initModelPath)(sc).booster
+    } else {
+      println("initModelPath is not set")
+      prevBooster
+    }
     // Train for every ${savingRound} rounds and save the partially completed booster
     checkpointManager.getCheckpointRounds(checkpointInterval, round).map {
       checkpointRound: Int =>

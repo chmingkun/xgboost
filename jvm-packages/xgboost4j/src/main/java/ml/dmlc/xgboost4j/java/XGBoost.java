@@ -170,6 +170,8 @@ public class XGBoost {
       booster.loadRabitCheckpoint();
     } else {
       // Start training on an existing booster
+      Rabit.trackerPrint(String.format("+++Start training on an existing booster"));
+      System.out.print("+++Start training on an existing booster");
       booster.setParams(params);
     }
 

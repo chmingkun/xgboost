@@ -99,6 +99,10 @@ class XGBoostEstimator private[spark](
     for (param <- params) {
       xgbParamMap += param.name -> $(param)
     }
+
+    if (xgboostParams.contains("init_model_path")) {
+      xgbParamMap += "init_model_path" -> xgboostParams("init_model_path")
+    }
     val r = xgbParamMap.toMap
     if (!XGBoost.isClassificationTask(r) || $(numClasses) == 2) {
       r - "num_class"
